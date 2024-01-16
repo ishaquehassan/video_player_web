@@ -31,8 +31,7 @@ const Map<int, String> _kErrorValueToErrorDescription = <int, String>{
 
 // The default error message, when the error is an empty string
 // See: https://developer.mozilla.org/en-US/docs/Web/API/MediaError/message
-const String _kDefaultErrorMessage =
-    'No further diagnostic information can be determined or provided.';
+const String _kDefaultErrorMessage = 'No further diagnostic information can be determined or provided.';
 
 /// Wraps a [html.VideoElement] so its API complies with what is expected by the plugin.
 class VideoPlayer {
@@ -80,9 +79,12 @@ class VideoPlayer {
     // See: https://developer.mozilla.org/en-US/docs/Glossary/Boolean/HTML
     _videoElement.setAttribute('playsinline', true);
 
-    _videoElement.onCanPlay.listen(_onVideoElementInitialization);
+    //_videoElement.onCanPlay.listen(_onVideoElementInitialization);
     // Needed for Safari iOS 17, which may not send `canplay`.
-    _videoElement.onLoadedMetadata.listen(_onVideoElementInitialization);
+    _videoElement.addEventListener("loadedmetadata", (e) {
+      _videoElement.currentTime = 1e101;
+      _videoElement.addEventListener("timeupdate", _onVideoElementInitialization);
+    });
 
     _videoElement.onCanPlayThrough.listen((dynamic _) {
       setBuffering(false);
@@ -134,6 +136,7 @@ class VideoPlayer {
     // the listeners for the events that the plugin cares about are attached.
     if (src != null) {
       _videoElement.src = src;
+      _videoElement.load();
     }
   }
 
@@ -273,9 +276,10 @@ class VideoPlayer {
   // only broadcast an "initialized" event the first time it's called, and ignore
   // the rest of the calls.
   num? lastReportedDuration;
+
   void _onVideoElementInitialization(Object? _) {
-    bool shouldUpdate = lastReportedDuration == null || (lastReportedDuration?.isNegative ?? true) || (lastReportedDuration?.isInfinite ?? true) || lastReportedDuration == 0;
-    if (!_isInitialized || shouldUpdate) {
+    bool shouldUpdate = !_videoElement.duration.isNegative && !_videoElement.duration.isInfinite && _videoElement.duration > 0;
+    if (!_isInitialized && shouldUpdate) {
       lastReportedDuration = _videoElement.duration;
       _isInitialized = true;
       _sendInitialized();
@@ -284,14 +288,13 @@ class VideoPlayer {
 
   // Sends an [VideoEventType.initialized] [VideoEvent] with info about the wrapped video.
   void _sendInitialized() {
-    final Duration? duration =
-        convertNumVideoDurationToPluginDuration(_videoElement.duration);
+    final Duration? duration = convertNumVideoDurationToPluginDuration(_videoElement.duration);
 
     final Size? size = _videoElement.videoHeight.isFinite
         ? Size(
-            _videoElement.videoWidth.toDouble(),
-            _videoElement.videoHeight.toDouble(),
-          )
+      _videoElement.videoWidth.toDouble(),
+      _videoElement.videoHeight.toDouble(),
+    )
         : null;
 
     _eventController.add(
@@ -312,9 +315,7 @@ class VideoPlayer {
     if (_isBuffering != buffering) {
       _isBuffering = buffering;
       _eventController.add(VideoEvent(
-        eventType: _isBuffering
-            ? VideoEventType.bufferingStart
-            : VideoEventType.bufferingEnd,
+        eventType: _isBuffering ? VideoEventType.bufferingStart : VideoEventType.bufferingEnd,
       ));
     }
   }
