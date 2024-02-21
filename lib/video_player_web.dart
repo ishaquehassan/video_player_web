@@ -53,8 +53,8 @@ class VideoPlayerPlugin extends VideoPlayerPlatform {
     late String uri;
     switch (dataSource.sourceType) {
       case DataSourceType.network:
-        // Do NOT modify the incoming uri, it can be a Blob, and Safari doesn't
-        // like blobs that have changed.
+      // Do NOT modify the incoming uri, it can be a Blob, and Safari doesn't
+      // like blobs that have changed.
         uri = dataSource.uri ?? '';
       case DataSourceType.asset:
         String assetUrl = dataSource.asset!;

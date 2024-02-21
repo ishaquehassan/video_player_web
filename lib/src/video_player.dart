@@ -31,7 +31,8 @@ const Map<int, String> _kErrorValueToErrorDescription = <int, String>{
 
 // The default error message, when the error is an empty string
 // See: https://developer.mozilla.org/en-US/docs/Web/API/MediaError/message
-const String _kDefaultErrorMessage = 'No further diagnostic information can be determined or provided.';
+const String _kDefaultErrorMessage =
+    'No further diagnostic information can be determined or provided.';
 
 /// Wraps a [html.VideoElement] so its API complies with what is expected by the plugin.
 class VideoPlayer {
@@ -79,11 +80,12 @@ class VideoPlayer {
     // See: https://developer.mozilla.org/en-US/docs/Glossary/Boolean/HTML
     _videoElement.setAttribute('playsinline', true);
 
-    //_videoElement.onCanPlay.listen(_onVideoElementInitialization);
-    // Needed for Safari iOS 17, which may not send `canplay`.
     _videoElement.addEventListener("loadedmetadata", (e) {
       _videoElement.currentTime = 1e101;
-      _videoElement.addEventListener("timeupdate", _onVideoElementInitialization);
+
+      _videoElement.addEventListener("timeupdate", (e){
+        _onVideoElementInitialization(e);
+      });
     });
 
     _videoElement.onCanPlayThrough.listen((dynamic _) {
@@ -315,7 +317,9 @@ class VideoPlayer {
     if (_isBuffering != buffering) {
       _isBuffering = buffering;
       _eventController.add(VideoEvent(
-        eventType: _isBuffering ? VideoEventType.bufferingStart : VideoEventType.bufferingEnd,
+        eventType: _isBuffering
+            ? VideoEventType.bufferingStart
+            : VideoEventType.bufferingEnd,
       ));
     }
   }
