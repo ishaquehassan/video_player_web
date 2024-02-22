@@ -80,13 +80,7 @@ class VideoPlayer {
     // See: https://developer.mozilla.org/en-US/docs/Glossary/Boolean/HTML
     _videoElement.setAttribute('playsinline', true);
 
-    _videoElement.addEventListener("loadedmetadata", (e) {
-      _videoElement.currentTime = 1e101;
-
-      _videoElement.addEventListener("timeupdate", (e){
-        _onVideoElementInitialization(e);
-      });
-    });
+    _videoElement.addEventListener("loadedmetadata", loadedmetadata);
 
     _videoElement.onCanPlayThrough.listen((dynamic _) {
       setBuffering(false);
@@ -140,6 +134,12 @@ class VideoPlayer {
       _videoElement.src = src;
       _videoElement.load();
     }
+  }
+
+  void loadedmetadata(e) {
+    print("loadedmetadata");
+  _videoElement.currentTime = 1e101;
+  _videoElement.addEventListener("timeupdate", _onVideoElementInitialization);
   }
 
   /// Attempts to play the video.
@@ -278,10 +278,13 @@ class VideoPlayer {
   // only broadcast an "initialized" event the first time it's called, and ignore
   // the rest of the calls.
   num? lastReportedDuration;
+  int eventCount = 0;
 
   void _onVideoElementInitialization(Object? _) {
     bool shouldUpdate = !_videoElement.duration.isNegative && !_videoElement.duration.isInfinite && _videoElement.duration > 0;
-    if (!_isInitialized && shouldUpdate) {
+    if (!_isInitialized && shouldUpdate && _videoElement.readyState >= 2) {
+      eventCount++;
+      _videoElement.removeEventListener("timeupdate", _onVideoElementInitialization);
       lastReportedDuration = _videoElement.duration;
       _isInitialized = true;
       _sendInitialized();
