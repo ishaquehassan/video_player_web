@@ -79,8 +79,12 @@ class VideoPlayer {
     // HTML Boolean attribute form (when present with any value => true)
     // See: https://developer.mozilla.org/en-US/docs/Glossary/Boolean/HTML
     _videoElement.setAttribute('playsinline', true);
-
     _videoElement.addEventListener("loadedmetadata", loadedmetadata);
+
+    if(isIphone){
+    // Needed for Safari iOS 17, which may not send `canplay`.
+    _videoElement.onLoadedMetadata.listen(_onVideoElementInitialization);
+    }
 
     _videoElement.onCanPlayThrough.listen((dynamic _) {
       setBuffering(false);
@@ -136,10 +140,17 @@ class VideoPlayer {
     }
   }
 
-  void loadedmetadata(e) {
+  void loadedmetadata(e) async {
     print("loadedmetadata");
-  _videoElement.currentTime = 1e101;
-  _videoElement.addEventListener("timeupdate", _onVideoElementInitialization);
+    if (isIphone) {
+      _onVideoElementInitialization(e);
+    } else {
+      _videoElement.currentTime = 1e101;
+      _videoElement.addEventListener("timeupdate", (e) {
+        isTimeUpdateCalled = true;
+        _onVideoElementInitialization(e);
+      });
+    }
   }
 
   /// Attempts to play the video.
@@ -279,12 +290,32 @@ class VideoPlayer {
   // the rest of the calls.
   num? lastReportedDuration;
   int eventCount = 0;
+  bool isTimeUpdateCalled = false;
 
-  void _onVideoElementInitialization(Object? _) {
-    bool shouldUpdate = !_videoElement.duration.isNegative && !_videoElement.duration.isInfinite && _videoElement.duration > 0;
-    if (!_isInitialized && shouldUpdate && _videoElement.readyState >= 2) {
+  var webUserAgent = html.window.navigator.userAgent.toLowerCase();
+
+  bool get isIphone => webUserAgent.contains('iphone;');
+
+  bool hasValidDuration() {
+    return !_videoElement.duration.isNegative &&
+        !_videoElement.duration.isInfinite &&
+        _videoElement.duration > 0;
+  }
+
+  void _onVideoElementInitialization(Object? _) async {
+    bool shouldUpdate = hasValidDuration() && _videoElement.readyState >= 2;
+    if (isIphone) {
+      _isInitialized = true;
+      _sendInitialized();
+      return;
+    }
+
+    if (!_isInitialized && shouldUpdate) {
       eventCount++;
-      _videoElement.removeEventListener("timeupdate", _onVideoElementInitialization);
+      if (isTimeUpdateCalled) {
+        _videoElement.removeEventListener(
+            "timeupdate", _onVideoElementInitialization);
+      }
       lastReportedDuration = _videoElement.duration;
       _isInitialized = true;
       _sendInitialized();
@@ -293,13 +324,14 @@ class VideoPlayer {
 
   // Sends an [VideoEventType.initialized] [VideoEvent] with info about the wrapped video.
   void _sendInitialized() {
-    final Duration? duration = convertNumVideoDurationToPluginDuration(_videoElement.duration);
+    final Duration? duration =
+        convertNumVideoDurationToPluginDuration(_videoElement.duration);
 
     final Size? size = _videoElement.videoHeight.isFinite
         ? Size(
-      _videoElement.videoWidth.toDouble(),
-      _videoElement.videoHeight.toDouble(),
-    )
+            _videoElement.videoWidth.toDouble(),
+            _videoElement.videoHeight.toDouble(),
+          )
         : null;
 
     _eventController.add(
