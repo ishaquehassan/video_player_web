@@ -209,7 +209,7 @@
       "name": "video_player_web",
       "rootUri": "../../",
       "packageUri": "lib/",
-      "languageVersion": "3.3"
+      "languageVersion": "3.1"
     },
     {
       "name": "vm_service",
@@ -230,7 +230,7 @@
       "languageVersion": "3.0"
     }
   ],
-  "generated": "2024-02-22T15:24:16.766978Z",
+  "generated": "2024-02-25T16:06:51.641870Z",
   "generator": "pub",
   "generatorVersion": "3.3.0"
 }

@@ -145,7 +145,7 @@ class VideoPlayer {
     if (isIphone) {
       _onVideoElementInitialization(e);
     } else {
-      _videoElement.currentTime = 1e101;
+      _videoElement.currentTime = 0;
       _videoElement.addEventListener("timeupdate", (e) {
         isTimeUpdateCalled = true;
         _onVideoElementInitialization(e);

@@ -167,10 +167,10 @@
       "name": "video_player_web",
       "rootUri": "../",
       "packageUri": "lib/",
-      "languageVersion": "3.3"
+      "languageVersion": "3.1"
     }
   ],
-  "generated": "2024-02-22T15:24:16.690124Z",
+  "generated": "2024-02-25T16:06:51.545639Z",
   "generator": "pub",
   "generatorVersion": "3.3.0"
 }
