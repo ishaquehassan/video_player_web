@@ -309,7 +309,7 @@ class VideoPlayer {
 
     await Future.delayed(Duration(milliseconds: 10));
     _videoElement.currentTime = 10000000000000000;
-    await Future.delayed(Duration(milliseconds: 10));
+    await Future.delayed(Duration(milliseconds: 250));
     _videoElement.currentTime = 0;
     await Future.delayed(Duration(milliseconds: 10));
 
