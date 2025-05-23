@@ -307,12 +307,13 @@ class VideoPlayer {
   // Sends an [VideoEventType.initialized] [VideoEvent] with info about the wrapped video.
   void _sendInitialized() async {
 
-    await Future.delayed(Duration(milliseconds: 10));
-    _videoElement.currentTime = 10000000000000000;
-    await Future.delayed(Duration(milliseconds: 250));
-    _videoElement.currentTime = 0;
-    await Future.delayed(Duration(milliseconds: 10));
-
+    // Wait until duration becomes infinity
+    while (_videoElement.duration.toString() == "Infinity") {
+      _videoElement.currentTime = 10000000000000000;
+      await Future.delayed(Duration(milliseconds: 150));
+      _videoElement.currentTime = 0;
+      await Future.delayed(Duration(milliseconds: 10));
+    }
 
     final Duration? duration =
         convertNumVideoDurationToPluginDuration(_videoElement.duration);
