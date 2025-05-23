@@ -306,13 +306,14 @@ class VideoPlayer {
 
   // Sends an [VideoEventType.initialized] [VideoEvent] with info about the wrapped video.
   void _sendInitialized() async {
-
+    int retryCount = 0;
     // Wait until duration becomes infinity
-    while (_videoElement.duration.toString() == "Infinity") {
+    while (_videoElement.duration.toString() == "Infinity" && retryCount <= 100) {
       _videoElement.currentTime = 10000000000000000;
       await Future.delayed(Duration(milliseconds: 150));
       _videoElement.currentTime = 0;
       await Future.delayed(Duration(milliseconds: 10));
+      retryCount++;
     }
 
     final Duration? duration =
